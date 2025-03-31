@@ -182,54 +182,32 @@ function showNotification(message, type) {
 // Image loading handler
 function handleImageLoading() {
     const images = document.querySelectorAll('img');
-    let notificationShown = false;
     
     images.forEach(img => {
-        img.classList.add('loading');
-        
-        if (img.classList.contains('profile-image')) {
-            img.style.backgroundColor = '#f0f0f0';
-            const tempHeight = img.closest('.about-image')?.offsetWidth || 300;
-            img.style.minHeight = `${tempHeight}px`;
+        // Add loading="lazy" for images below the fold
+        if (!img.classList.contains('hero-image') && !img.classList.contains('logo-img')) {
+            img.loading = 'lazy';
         }
         
-        img.onload = function() {
-            this.classList.remove('loading');
-            this.classList.add('loaded');
-            this.style.minHeight = 'auto';
-        };
+        // Add specific size attributes
+        if (img.classList.contains('profile-image')) {
+            img.width = '600';
+            img.height = '600';
+        } else if (img.classList.contains('project-image')) {
+            img.width = '800';
+            img.height = '450';
+        }
         
+        // Optimize error handling
         img.onerror = function() {
-            this.classList.remove('loading');
+            const fallbackPath = img.getAttribute('data-fallback') || 
+                               (img.classList.contains('profile-image') ? './images/placeholder-profile.jpg' : 
+                                img.classList.contains('project-image') ? './images/placeholder-project.jpg' : 
+                                './images/placeholder.jpg');
             
-            // Only show notification once
-            if (!notificationShown) {
-                showNotification('Some images failed to load. Using placeholders.', 'warning');
-                notificationShown = true;
+            if (this.src !== fallbackPath) {
+                this.src = fallbackPath;
             }
-            
-            // Set appropriate placeholder based on image type
-            const imagePath = this.getAttribute('src');
-            console.log(`Image failed to load: ${imagePath}`);
-
-            // Update placeholder paths based on image type
-            if (this.classList.contains('profile-image')) {
-                this.src = '/images/placeholder-profile.jpg';
-            } else if (this.classList.contains('logo-img')) {
-                this.src = '/images/logo.png';
-            } else if (this.classList.contains('project-image')) {
-                this.src = '/images/placeholder-project.jpg';
-            } else if (this.classList.contains('album-art')) {
-                this.src = '/images/placeholder-album.jpg';
-            } else {
-                this.src = '/images/placeholder.jpg';
-            }
-
-            // Add error class for styling
-            this.classList.add('image-error');
-            
-            // Prevent infinite error loop
-            this.onerror = null;
         };
     });
 }
@@ -426,14 +404,24 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Initialize features
+// Initialize features with performance optimization
 document.addEventListener('DOMContentLoaded', () => {
-    handleLogoLoading();
-    validateLogoPath();
-    handleImageLoading();
+    // Critical features first
     handleNavbarScroll();
-    verifyImagePaths();
+    handleLogoLoading();
+    
+    // Defer non-critical operations
+    requestAnimationFrame(() => {
+        handleImageLoading();
+        setupMobileNav();
+    });
+    
+    // Lazy load verification
+    requestIdleCallback(() => {
+        verifyImagePaths();
+    });
 });
+
 
 
 

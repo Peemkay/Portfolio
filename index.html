@@ -4,10 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Peemkay | Artist & Software Engineer</title>
+    
+    <!-- Preload critical assets -->
+    <link rel="preload" href="./css/style.css" as="style">
+    <link rel="preload" href="./js/main.js" as="script">
+    <link rel="preload" href="./images/logo.png" as="image">
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- Critical CSS inline -->
+    <style>
+        body { opacity: 1; transition: opacity .2s; }
+        .hero { min-height: 100vh; }
+    </style>
+    
     <link rel="icon" type="image/png" href="./images/logo.png">
-    <link rel="apple-touch-icon" href="./images/logo.png">
     <link rel="stylesheet" href="./css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Defer non-critical CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" 
+          media="print" onload="this.media='all'">
+    
+    <!-- Defer JavaScript -->
     <script src="./js/main.js" defer></script>
 </head>
 <body>
@@ -190,6 +209,7 @@
     </footer>
 </body>
 </html>
+
 
 
 
