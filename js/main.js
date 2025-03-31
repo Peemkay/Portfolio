@@ -182,32 +182,50 @@ function showNotification(message, type) {
 // Image loading handler
 function handleImageLoading() {
     const images = document.querySelectorAll('img');
+    let notificationShown = false;
     
     images.forEach(img => {
-        // Add loading="lazy" for images below the fold
-        if (!img.classList.contains('hero-image') && !img.classList.contains('logo-img')) {
-            img.loading = 'lazy';
-        }
+        img.classList.add('loading');
         
-        // Add specific size attributes
         if (img.classList.contains('profile-image')) {
-            img.width = '600';
-            img.height = '600';
-        } else if (img.classList.contains('project-image')) {
-            img.width = '800';
-            img.height = '450';
+            img.style.backgroundColor = '#f0f0f0';
+            const tempHeight = img.closest('.about-image')?.offsetWidth || 300;
+            img.style.minHeight = `${tempHeight}px`;
         }
         
-        // Optimize error handling
+        img.onload = function() {
+            this.classList.remove('loading');
+            this.classList.add('loaded');
+            this.style.minHeight = 'auto';
+        };
+        
         img.onerror = function() {
-            const fallbackPath = img.getAttribute('data-fallback') || 
-                               (img.classList.contains('profile-image') ? './images/placeholder-profile.jpg' : 
-                                img.classList.contains('project-image') ? './images/placeholder-project.jpg' : 
-                                './images/placeholder.jpg');
-            
-            if (this.src !== fallbackPath) {
-                this.src = fallbackPath;
+            this.classList.remove('loading');
+            if (!notificationShown) {
+                showNotification('Some images failed to load. Using placeholders.', 'warning');
+                notificationShown = true;
             }
+            
+            // Update placeholder paths based on image type
+            const defaultPlaceholder = 'images/placeholder-profile.jpg';
+            
+            if (!this.hasAttribute('src') || this.getAttribute('src') === 'images/placeholder.jpg') {
+                // If no src or using generic placeholder, set appropriate placeholder based on class
+                if (this.classList.contains('profile-image')) {
+                    this.src = 'images/placeholder-profile.jpg';
+                } else if (this.classList.contains('logo-img')) {
+                    this.src = 'images/logo.png';
+                } else if (this.classList.contains('project-image')) {
+                    this.src = 'images/placeholder-project.jpg';
+                } else if (this.classList.contains('album-art')) {
+                    this.src = 'images/placeholder-album.jpg';
+                } else {
+                    this.src = defaultPlaceholder;
+                }
+            }
+            
+            // Add error class for styling
+            this.classList.add('image-error');
         };
     });
 }
@@ -404,24 +422,14 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Initialize features with performance optimization
+// Initialize features
 document.addEventListener('DOMContentLoaded', () => {
-    // Critical features first
-    handleNavbarScroll();
     handleLogoLoading();
-    
-    // Defer non-critical operations
-    requestAnimationFrame(() => {
-        handleImageLoading();
-        setupMobileNav();
-    });
-    
-    // Lazy load verification
-    requestIdleCallback(() => {
-        verifyImagePaths();
-    });
+    validateLogoPath();
+    handleImageLoading();
+    handleNavbarScroll();
+    verifyImagePaths();
 });
-
 
 
 
