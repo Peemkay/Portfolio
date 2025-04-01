@@ -1,31 +1,81 @@
-// Smooth Scrolling
+// Enhanced Smooth Scrolling with progress indicator
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        document.querySelector(this.getAttribute('href')).scrollIntoView({
-            behavior: 'smooth'
-        });
+        const target = document.querySelector(this.getAttribute('href'));
+        if (!target) return;
+
+        // Add progress bar
+        const progressBar = document.createElement('div');
+        progressBar.className = 'scroll-progress';
+        document.body.appendChild(progressBar);
+
+        const start = window.pageYOffset;
+        const end = target.offsetTop;
+        const distance = end - start;
+        const duration = 1000; // ms
+        let startTime = null;
+
+        function animation(currentTime) {
+            if (startTime === null) startTime = currentTime;
+            const timeElapsed = currentTime - startTime;
+            const progress = Math.min(timeElapsed / duration, 1);
+            
+            const easing = t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+            const run = easing(progress);
+
+            window.scrollTo(0, start + distance * run);
+            progressBar.style.width = `${progress * 100}%`;
+
+            if (timeElapsed < duration) {
+                requestAnimationFrame(animation);
+            } else {
+                progressBar.remove();
+            }
+        }
+
+        requestAnimationFrame(animation);
     });
 });
 
-// Music Player functionality
+// Enhanced Music Player with visualizer
 const modal = document.getElementById('music-modal');
 const playerContainer = document.getElementById('player-container');
 const closeModal = document.querySelector('.close-modal');
 
 document.querySelectorAll('.play-btn').forEach(button => {
+    // Add hover effect
+    button.addEventListener('mouseenter', () => {
+        button.style.transform = 'scale(1.1) rotate(10deg)';
+    });
+    button.addEventListener('mouseleave', () => {
+        button.style.transform = 'scale(1) rotate(0deg)';
+    });
+
     button.addEventListener('click', () => {
         const trackUrl = button.dataset.track;
+        
+        // Add loading animation
+        modal.classList.add('loading');
         playerContainer.innerHTML = `
-            <iframe allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" 
-                    frameborder="0" 
-                    height="450" 
-                    style="width:100%;max-width:660px;overflow:hidden;border-radius:10px;" 
-                    sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" 
-                    src="${trackUrl}">
+            <div class="music-loader">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <iframe 
+                allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" 
+                frameborder="0" 
+                height="450" 
+                style="width:100%;max-width:660px;overflow:hidden;border-radius:10px;opacity:0;transition:opacity 0.5s" 
+                sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" 
+                src="${trackUrl}"
+                onload="this.style.opacity=1;this.previousElementSibling.remove()">
             </iframe>
         `;
+        
         modal.classList.add('active');
+        setTimeout(() => modal.classList.remove('loading'), 1000);
     });
 });
 
@@ -41,10 +91,47 @@ modal.addEventListener('click', (e) => {
     }
 });
 
-// Project Gallery
+// Enhanced Project Gallery with parallax effect
 class ProjectGallery {
     constructor() {
         this.initLightbox();
+        this.initParallax();
+    }
+
+    initParallax() {
+        document.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const xPercent = (x / rect.width - 0.5) * 20;
+                const yPercent = (y / rect.height - 0.5) * 20;
+                
+                card.style.transform = `
+                    perspective(1000px)
+                    rotateX(${-yPercent}deg)
+                    rotateY(${xPercent}deg)
+                    scale3d(1.05, 1.05, 1.05)
+                `;
+                
+                const image = card.querySelector('.project-image img');
+                if (image) {
+                    image.style.transform = `
+                        translateX(${xPercent * 0.5}px)
+                        translateY(${yPercent * 0.5}px)
+                    `;
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'none';
+                const image = card.querySelector('.project-image img');
+                if (image) {
+                    image.style.transform = 'none';
+                }
+            });
+        });
     }
 
     initLightbox() {
@@ -69,25 +156,61 @@ class ProjectGallery {
         lightbox.innerHTML = `
             <div class="lightbox-content">
                 <button class="close-btn">&times;</button>
-                <img src="${imgSrc}" alt="${title}">
-                <h3>${title}</h3>
-                <p>${desc}</p>
+                <div class="lightbox-image-container">
+                    <img src="${imgSrc}" alt="${title}">
+                    <div class="image-loader">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="lightbox-text">
+                    <h3>${title}</h3>
+                    <p>${desc}</p>
+                </div>
             </div>
         `;
 
         document.body.appendChild(lightbox);
         
-        // Close button functionality
-        lightbox.querySelector('.close-btn').onclick = () => {
-            lightbox.remove();
+        // Fade in animation
+        requestAnimationFrame(() => {
+            lightbox.style.opacity = '1';
+        });
+
+        const img = lightbox.querySelector('img');
+        img.onload = () => {
+            img.classList.add('loaded');
+            lightbox.querySelector('.image-loader').style.display = 'none';
         };
+        
+        // Close button functionality with ripple effect
+        const closeBtn = lightbox.querySelector('.close-btn');
+        closeBtn.addEventListener('click', (e) => {
+            const ripple = document.createElement('div');
+            ripple.className = 'ripple';
+            closeBtn.appendChild(ripple);
+            
+            const rect = closeBtn.getBoundingClientRect();
+            ripple.style.left = `${e.clientX - rect.left}px`;
+            ripple.style.top = `${e.clientY - rect.top}px`;
+            
+            setTimeout(() => {
+                lightbox.style.opacity = '0';
+                setTimeout(() => lightbox.remove(), 300);
+            }, 300);
+        });
 
         // Click outside to close
-        lightbox.onclick = (e) => {
-            if (e.target === lightbox) lightbox.remove();
-        };
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                lightbox.style.opacity = '0';
+                setTimeout(() => lightbox.remove(), 300);
+            }
+        });
     }
 }
+
+// Initialize the enhanced gallery
+new ProjectGallery();
 
 // Animation Effects
 const observerOptions = {
@@ -247,29 +370,61 @@ document.head.insertAdjacentHTML('beforeend', `
     </style>
 `);
 
-// Navbar color change on scroll
-function handleNavbarScroll() {
+// Enhanced Navbar Functionality
+function handleNavbarVisibility() {
     const nav = document.querySelector('nav');
     const heroSection = document.querySelector('.hero');
+    let lastScrollY = window.scrollY;
     
     function updateNavbar() {
-        const heroBottom = heroSection.offsetTop + heroSection.offsetHeight;
-        const scrollPosition = window.scrollY;
+        const currentScrollY = window.scrollY;
+        const heroBottom = heroSection?.offsetTop + (heroSection?.offsetHeight || 0);
         
-        if (scrollPosition > heroBottom - nav.offsetHeight) {
+        // Determine if scrolling up or down
+        const isScrollingDown = currentScrollY > lastScrollY;
+        
+        // Update navbar appearance based on scroll position
+        if (currentScrollY > heroBottom - nav.offsetHeight) {
             nav.classList.remove('dark');
             nav.classList.add('light');
         } else {
             nav.classList.remove('light');
             nav.classList.add('dark');
         }
+        
+        lastScrollY = currentScrollY;
+    }
+    
+    // Update active section in navbar
+    function updateActiveSection() {
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.nav-links a');
+        
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop - 100;
+            const sectionBottom = sectionTop + section.offsetHeight;
+            const currentScroll = window.scrollY;
+            
+            if (currentScroll >= sectionTop && currentScroll < sectionBottom) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${section.id}`) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
     }
     
     // Initial check
     updateNavbar();
+    updateActiveSection();
     
     // Update on scroll
-    window.addEventListener('scroll', updateNavbar);
+    window.addEventListener('scroll', () => {
+        updateNavbar();
+        updateActiveSection();
+    });
 }
 
 // Logo loading handler
@@ -456,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     handleLogoLoading();
     validateLogoPath();
     handleImageLoading();
-    handleNavbarScroll();
+    handleNavbarVisibility();
     verifyImagePaths();
     optimizeImageLoading();
 });
@@ -532,6 +687,9 @@ document.querySelectorAll('img').forEach(img => {
         img.addEventListener('load', () => handleImageLoad(img));
     }
 });
+
+
+
 
 
 
