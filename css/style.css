@@ -12,6 +12,53 @@
     --nav-border-light: rgba(0, 0, 0, 0.1);
 }
 
+/* Prevent text selection and highlighting */
+* {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Allow text selection only in specific elements where needed */
+input,
+textarea,
+.contact-email,
+.footer-bottom p,
+[data-selectable] {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+/* Prevent image dragging */
+img {
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+    -moz-user-drag: none;
+    -o-user-drag: none;
+    user-drag: none;
+    pointer-events: none;
+}
+
+/* Allow image interaction only for specific images */
+img[data-interactive] {
+    pointer-events: auto;
+}
+
+/* Prevent blue highlight on mobile tap */
+a,
+button,
+.btn,
+.nav-links a,
+.mobile-nav-toggle {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
 * {
     margin: 0;
     padding: 0;
