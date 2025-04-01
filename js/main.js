@@ -8,65 +8,38 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Music Player
-class MusicPlayer {
-    constructor() {
-        this.audio = new Audio();
-        this.isPlaying = false;
-        this.currentTrack = null;
-        
-        // Initialize play buttons
-        this.initPlayButtons();
-    }
+// Music Player functionality
+const modal = document.getElementById('music-modal');
+const playerContainer = document.getElementById('player-container');
+const closeModal = document.querySelector('.close-modal');
 
-    initPlayButtons() {
-        document.querySelectorAll('.play-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                const albumCard = btn.closest('.album-card');
-                const trackUrl = albumCard.dataset.trackUrl;
-                const trackTitle = albumCard.querySelector('.album-info h3').textContent;
-                
-                if (this.currentTrack === trackUrl) {
-                    this.togglePlay();
-                } else {
-                    this.loadAndPlay(trackUrl, trackTitle, btn);
-                }
-            });
-        });
-    }
+document.querySelectorAll('.play-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const trackUrl = button.dataset.track;
+        playerContainer.innerHTML = `
+            <iframe allow="autoplay *; encrypted-media *; fullscreen *; clipboard-write" 
+                    frameborder="0" 
+                    height="450" 
+                    style="width:100%;max-width:660px;overflow:hidden;border-radius:10px;" 
+                    sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-storage-access-by-user-activation allow-top-navigation-by-user-activation" 
+                    src="${trackUrl}">
+            </iframe>
+        `;
+        modal.classList.add('active');
+    });
+});
 
-    loadAndPlay(trackUrl, trackTitle, btn) {
-        this.audio.src = trackUrl;
-        this.currentTrack = trackUrl;
-        this.audio.play()
-            .then(() => {
-                this.isPlaying = true;
-                this.updatePlayButton(btn);
-            })
-            .catch(error => console.error('Error playing audio:', error));
-    }
+closeModal.addEventListener('click', () => {
+    modal.classList.remove('active');
+    playerContainer.innerHTML = ''; // Stop the music
+});
 
-    togglePlay() {
-        if (this.isPlaying) {
-            this.audio.pause();
-        } else {
-            this.audio.play();
-        }
-        this.isPlaying = !this.isPlaying;
-        this.updatePlayButton();
+modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+        modal.classList.remove('active');
+        playerContainer.innerHTML = ''; // Stop the music
     }
-
-    updatePlayButton(btn) {
-        document.querySelectorAll('.play-btn i').forEach(icon => {
-            icon.className = 'fas fa-play';
-        });
-        
-        if (btn && this.isPlaying) {
-            btn.querySelector('i').className = 'fas fa-pause';
-        }
-    }
-}
+});
 
 // Project Gallery
 class ProjectGallery {
@@ -202,7 +175,7 @@ function handleImageLoading() {
         img.onerror = function() {
             this.classList.remove('loading');
             if (!notificationShown) {
-                showNotification('Some images failed to load. Using placeholders.', 'warning');
+                showNotification('Some elements failed to load as this site is under construction by Peemkay.', 'warning');
                 notificationShown = true;
             }
             
@@ -422,6 +395,62 @@ window.addEventListener('resize', () => {
     }
 });
 
+// Image loading optimization
+function optimizeImageLoading() {
+    const images = document.querySelectorAll('img[data-src]');
+    
+    const imageOptions = {
+        threshold: 0.1,
+        rootMargin: '50px'
+    };
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                loadImage(entry.target);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, imageOptions);
+    
+    function loadImage(image) {
+        const src = image.dataset.src;
+        if (!src) return;
+        
+        // Start loading animation
+        image.classList.add('loading');
+        
+        // Create temporary image to test loading
+        const tempImage = new Image();
+        
+        tempImage.onload = function() {
+            image.src = src;
+            image.classList.remove('loading');
+            image.classList.add('loaded');
+        };
+        
+        tempImage.onerror = function() {
+            // If Apple Music image fails, try fallback URL
+            if (src.includes('mzstatic.com')) {
+                const fallbackUrl = image.dataset.fallback;
+                if (fallbackUrl) {
+                    image.src = fallbackUrl;
+                } else {
+                    image.src = 'images/placeholder-project.jpg';
+                }
+            } else {
+                image.src = 'images/placeholder-project.jpg';
+            }
+            image.classList.remove('loading');
+            image.classList.add('loaded', 'image-error');
+        };
+        
+        tempImage.src = src;
+    }
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
 // Initialize features
 document.addEventListener('DOMContentLoaded', () => {
     handleLogoLoading();
@@ -429,7 +458,15 @@ document.addEventListener('DOMContentLoaded', () => {
     handleImageLoading();
     handleNavbarScroll();
     verifyImagePaths();
+    optimizeImageLoading();
 });
+
+
+
+
+
+
+
 
 
 
