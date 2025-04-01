@@ -461,6 +461,79 @@ document.addEventListener('DOMContentLoaded', () => {
     optimizeImageLoading();
 });
 
+// Section visibility animation
+const sectionObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, {
+    threshold: 0.2
+});
+
+document.querySelectorAll('section').forEach(section => {
+    sectionObserver.observe(section);
+});
+
+// Smooth scroll for nav links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+});
+
+// Track card hover effects
+document.querySelectorAll('.track-card').forEach(card => {
+    card.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-10px)';
+    });
+    
+    card.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+    });
+});
+
+// Button click effect
+document.querySelectorAll('.btn').forEach(button => {
+    button.addEventListener('click', function(e) {
+        const x = e.clientX - e.target.offsetLeft;
+        const y = e.clientY - e.target.offsetTop;
+        
+        const ripple = document.createElement('span');
+        ripple.style.left = `${x}px`;
+        ripple.style.top = `${y}px`;
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+});
+
+// Enhanced loading animations for images
+function handleImageLoad(img) {
+    img.classList.add('loaded');
+    img.parentElement.classList.add('loaded');
+}
+
+document.querySelectorAll('img').forEach(img => {
+    if (img.complete) {
+        handleImageLoad(img);
+    } else {
+        img.addEventListener('load', () => handleImageLoad(img));
+    }
+});
+
+
 
 
 
